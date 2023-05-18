@@ -1,4 +1,4 @@
-module biquge.go
+module main
 
 go 1.20
 
