@@ -80,8 +80,9 @@ func biqusoso() *THandler {
 				d.Data.Title = e.Text
 			})
 			c.OnHTML("#txt", func(e *colly.HTMLElement) {
+				ret, _ := e.DOM.Html()
 				// 去除网站广告
-				content := strings.Split(e.Text, "『如果章节错误，点此举报』")[1]
+				content := strings.Split(ret, "『如果章节错误，点此举报』</a>")[1]
 				d.Data.Content = content
 			})
 			/*
