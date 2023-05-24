@@ -79,7 +79,7 @@ func getClient(host string, origin string, referer string) *colly.Collector {
 type TEmpty struct {
 	Code int    `json:"code"`
 	Msg  string `json:"msg"`
-	Data string `json:"data"`
+	Data []any  `json:"data"`
 }
 
 func HttpHandler(w http.ResponseWriter, r *http.Request, d *THandler) {
@@ -88,6 +88,7 @@ func HttpHandler(w http.ResponseWriter, r *http.Request, d *THandler) {
 		res := new(TEmpty)
 		res.Code = 0
 		res.Msg = ""
+		res.Data = []any{}
 		ret_json, _ := json.Marshal(res)
 		io.WriteString(w, string(ret_json))
 	} else {
@@ -106,6 +107,7 @@ func HttpHandler(w http.ResponseWriter, r *http.Request, d *THandler) {
 				res := new(TEmpty)
 				res.Code = 0
 				res.Msg = ""
+				res.Data = []any{}
 				ret_json, _ := json.Marshal(res)
 				io.WriteString(w, string(ret_json))
 			}
