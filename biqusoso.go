@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	colly "github.com/gocolly/colly/v2"
@@ -43,6 +44,10 @@ func biqusoso() *THandler {
 			if name != "" {
 				url = url + "&q=" + name
 			}
+			c.OnError(func(_ *colly.Response, err error) {
+				fmt.Println("search error ", err)
+				d.Data = []TSearchData{}
+			})
 			c.Visit(url)
 		},
 		B_fnc: func(c *colly.Collector, d *TBook, url string) {
@@ -71,6 +76,10 @@ func biqusoso() *THandler {
 						})
 					}
 				})
+			})
+			c.OnError(func(_ *colly.Response, err error) {
+				fmt.Println("book error ", err)
+				d.Data = []TBookData{}
 			})
 
 			c.Visit(url)
@@ -105,6 +114,10 @@ func biqusoso() *THandler {
 				d.Data.Next = e.Attr("href")
 				href := e.Attr("href")
 				d.Data.Next = strings.Replace(strings.Replace(href, ".html", "", -1), "/booktxt/", "", -1)
+			})
+			c.OnError(func(_ *colly.Response, err error) {
+				fmt.Println("chapter error ", err)
+				d.Data = TChapterData{}
 			})
 
 			c.Visit(url)

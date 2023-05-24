@@ -33,6 +33,10 @@ func biquge() *THandler {
 					d.Data = append(d.Data, data)
 				}
 			})
+			c.OnError(func(_ *colly.Response, err error) {
+				fmt.Println("search error ", err)
+				d.Data = []TSearchData{}
+			})
 
 			err := c.Post("https://www.ibiquges.com/modules/article/waps.php", map[string]string{"searchkey": name})
 			if err != nil {
@@ -54,6 +58,10 @@ func biquge() *THandler {
 						Link: link,
 					})
 				})
+			})
+			c.OnError(func(_ *colly.Response, err error) {
+				fmt.Println("book error ", err)
+				d.Data = []TBookData{}
 			})
 
 			c.Visit(url)
@@ -88,6 +96,10 @@ func biquge() *THandler {
 						}
 					}
 				})
+			})
+			c.OnError(func(_ *colly.Response, err error) {
+				fmt.Println("chapter error ", err)
+				d.Data = TChapterData{}
 			})
 
 			c.Visit(url)
