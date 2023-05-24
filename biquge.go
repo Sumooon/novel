@@ -71,8 +71,9 @@ func biquge() *THandler {
 				d.Data.Title = e.Text
 			})
 			c.OnHTML("#content", func(e *colly.HTMLElement) {
+				ret, _ := e.DOM.Html()
 				// 去除网站广告
-				content := strings.Split(e.Text, "亲,点击进去")[0]
+				content := strings.Split(ret, "亲,点击进去")[0]
 				d.Data.Content = content
 			})
 			c.OnHTML(".bottem2", func(e *colly.HTMLElement) {
