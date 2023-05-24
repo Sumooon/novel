@@ -104,9 +104,11 @@ func biquge() *THandler {
 
 			c.Visit(url)
 		},
-		Host:    "www.ibiquges.com",
-		Origin:  "www.ibiquges.com",
-		Referer: "https://www.ibiquges.com/modules/article/waps.php",
+		Header: map[string]string{
+			"Host":    "www.ibiquges.com",
+			"Origin":  "www.ibiquges.com",
+			"Referer": "https://www.ibiquges.com/modules/article/waps.php",
+		},
 		BURL: func(key string) string {
 			return "https://www.ibiquges.com/" + key
 		},

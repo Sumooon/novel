@@ -10,24 +10,6 @@ import (
 func biqusoso() *THandler {
 	return &THandler{
 		S_fnc: func(c *colly.Collector, d *TSearch, name string) {
-			/*
-				<div class="search-list">
-					<h2>
-						搜索"噩梦惊袭"相关小说
-					</h2>
-					<ul>
-						<li><span class="s1"><b>序号</b></span>
-							<span class="s2"><b>作品名称</b></span>
-							<span class="s4"><b>作者</b></span>
-						</li>
-						<li>
-							<span class="s1">1</span>
-							<span class="s2"><a href="http://www.qu-la.com/book/goto/id/94897903" target="_blank">噩梦惊袭</a></span>
-							<span class="s4">温柔劝睡师</span>
-						</li>
-					</ul>
-				</div>
-			*/
 			c.OnHTML(".novelslist2", func(e *colly.HTMLElement) {
 				e.ForEach("li", func(i int, el *colly.HTMLElement) {
 					if i > 0 {
@@ -41,46 +23,30 @@ func biqusoso() *THandler {
 					}
 				})
 			})
+			c.OnError(func(_ *colly.Response, err error) {
+				fmt.Println("search err:", err)
+			})
 
 			url := "https://www.166xs.org/search.php"
 			if name != "" {
-				url = url + "&keyword=" + name
+				url = url + "?keyword=" + encodeURI(name)
 			}
-			c.OnError(func(_ *colly.Response, err error) {
-				fmt.Println("search error ", err)
-				d.Data = []TSearchData{}
-			})
 			c.Visit(url)
 		},
 		B_fnc: func(c *colly.Collector, d *TBook, url string) {
-			/*
-				<div class="book-chapter-list">
-				<h3>最新章节预览</h3>
-				<ul class="cf">
-					<li><a href="/booktxt/82989775116/7979411116.html">460. 育英综合大学 温简言 “冤枉啊”……</a></li>
-					.....
-				</ul>
-				<h3>正文</h3>
-				<ul class="cf">
-					<li><a href="/booktxt/82989775116/1920260116.html">第1章 德才中学</a></li>
-				</ul>
-			*/
-			c.OnHTML("#listt", func(e *colly.HTMLElement) {
-				e.ForEach("dt", func(i int, el *colly.HTMLElement) {
-					if i > 0 {
-						el.ForEach("dd a", func(li int, a *colly.HTMLElement) {
-							link := a.Attr("href")
-							d.Data = append(d.Data, TBookData{
-								Name: a.Text,
-								Link: link,
-							})
+			c.OnHTML("#list dl", func(e *colly.HTMLElement) {
+				// ret, _ := e.DOM.Html()
+				// str := strings.Split(ret, "正文</dt>")[1]
+				// fmt.Println("res ", str)
+				e.ForEach("dd", func(i int, el *colly.HTMLElement) {
+					if i > 14 {
+						link := el.ChildAttr("a", "href")
+						d.Data = append(d.Data, TBookData{
+							Name: el.Text,
+							Link: link,
 						})
 					}
 				})
-			})
-			c.OnError(func(_ *colly.Response, err error) {
-				fmt.Println("book error ", err)
-				d.Data = []TBookData{}
 			})
 
 			c.Visit(url)
@@ -113,16 +79,14 @@ func biqusoso() *THandler {
 			c.OnHTML(".next", func(e *colly.HTMLElement) {
 				d.Data.Next = e.Attr("href")
 			})
-			c.OnError(func(_ *colly.Response, err error) {
-				fmt.Println("chapter error ", err)
-				d.Data = TChapterData{}
-			})
 
 			c.Visit(url)
 		},
-		Host:    "www.166xs.org",
-		Origin:  "www.166xs.org",
-		Referer: "https://www.166xs.org",
+		Header: map[string]string{
+			"Host":    "www.166xs.org",
+			"Origin":  "www.166xs.org",
+			"Referer": "https://www.166xs.org",
+		},
 		BURL: func(key string) string {
 			return "https://www.166xs.org" + key
 		},

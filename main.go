@@ -5,9 +5,32 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 
 	colly "github.com/gocolly/colly/v2"
 )
+
+func zhToUnicode(text string) (string, error) {
+	fmt.Println("from ", text)
+	textQuoted := strconv.QuoteToASCII(text)
+	textUnquoted := textQuoted[1 : len(textQuoted)-1]
+	fmt.Println(textUnquoted)
+	str, err := strconv.Unquote(strings.Replace(strconv.Quote(string(textUnquoted)), `\\u`, `\u`, -1))
+	if err != nil {
+		return text, err
+	}
+	fmt.Println("to ", str)
+	return str, nil
+}
+func encodeURI(str string) string {
+	fmt.Println("from ", str)
+	r := url.QueryEscape(str)
+	r = strings.Replace(r, "+", "%20", -1)
+	fmt.Println("to ", r)
+	return r
+}
 
 type TSearchFunc func(*colly.Collector, *TSearch, string)
 type TBookFunc func(*colly.Collector, *TBook, string)
@@ -16,14 +39,12 @@ type TBookUrl func(string) string
 type TChapterUrl func(string) string
 
 type THandler struct {
-	S_fnc   TSearchFunc
-	B_fnc   TBookFunc
-	C_fnc   TChapterFunc
-	BURL    TBookUrl
-	CURL    TChapterUrl
-	Host    string
-	Origin  string
-	Referer string
+	S_fnc  TSearchFunc
+	B_fnc  TBookFunc
+	C_fnc  TChapterFunc
+	BURL   TBookUrl
+	CURL   TChapterUrl
+	Header map[string]string
 }
 
 func main() {
@@ -40,7 +61,7 @@ func main() {
 	http.ListenAndServe(":9090", nil)
 }
 
-func getClient(host string, origin string, referer string) *colly.Collector {
+func getClient(header map[string]string) *colly.Collector {
 	// NewCollector(options ...func(*Collector)) *Collector
 	// 声明初始化NewCollector对象时可以指定Agent，连接递归深度，URL过滤以及domain限制等
 	c := colly.NewCollector(
@@ -50,13 +71,13 @@ func getClient(host string, origin string, referer string) *colly.Collector {
 	// 发出请求时附的回调
 	c.OnRequest(func(r *colly.Request) {
 		// Request头部设定
-		r.Headers.Set("Host", host)
 		r.Headers.Set("Connection", "keep-alive")
 		r.Headers.Set("Accept", "*/*")
-		r.Headers.Set("Origin", origin)
-		r.Headers.Set("Referer", referer)
-		r.Headers.Set("Accept-Encoding", "gzip, deflate")
-		r.Headers.Set("Accept-Language", "zh-CN, zh;q=0.9")
+		r.Headers.Set("Accept-Encoding", "gzip, deflate, br")
+		r.Headers.Set("Accept-Language", "en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6")
+		for key, value := range header {
+			r.Headers.Set(key, value)
+		}
 
 		fmt.Println("Visiting", r.URL)
 	})
@@ -137,10 +158,11 @@ func searchBook(name string, d *THandler) *TSearch {
 	res := new(TSearch)
 	res.Code = 0
 	res.Msg = ""
+	res.Data = []TSearchData{}
 	if name == "" {
 		return res
 	}
-	c := getClient(d.Host, d.Origin, d.Referer)
+	c := getClient(d.Header)
 
 	d.S_fnc(c, res, name)
 	return res
@@ -163,10 +185,11 @@ func getBook(url string, d *THandler) *TBook {
 	res := new(TBook)
 	res.Code = 0
 	res.Msg = ""
+	res.Data = []TBookData{}
 	if url == "" {
 		return res
 	}
-	c := getClient(d.Host, d.Origin, d.Referer)
+	c := getClient(d.Header)
 	d.B_fnc(c, res, url)
 
 	return res
@@ -192,10 +215,11 @@ func getChapter(url string, d *THandler) *TChapter {
 	res := new(TChapter)
 	res.Code = 0
 	res.Msg = ""
+	res.Data = TChapterData{}
 	if url == "" {
 		return res
 	}
-	c := getClient(d.Host, d.Origin, d.Referer)
+	c := getClient(d.Header)
 	d.C_fnc(c, res, url)
 
 	return res
