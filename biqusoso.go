@@ -28,21 +28,23 @@ func biqusoso() *THandler {
 					</ul>
 				</div>
 			*/
-			c.OnHTML(".search-list", func(e *colly.HTMLElement) {
+			c.OnHTML(".novelslist2", func(e *colly.HTMLElement) {
 				e.ForEach("li", func(i int, el *colly.HTMLElement) {
 					if i > 0 {
 						var data TSearchData
-						data.Link = strings.Replace(el.ChildAttr(".s2 a", "href"), "http://www.qu-la.com/book/goto/id/", "", -1)
+						data.Link = el.ChildAttr(".s2 a", "href")
 						data.Name = el.ChildText(".s2")
 						data.Author = el.ChildText(".s4")
+						data.Chapter = el.ChildText(".s3")
+						data.Time = el.ChildText(".s6")
 						d.Data = append(d.Data, data)
 					}
 				})
 			})
 
-			url := "https://so.biqusoso.com/s.php?siteid=lvsetxt.com&ie=utf-8"
+			url := "https://www.166xs.org/search.php"
 			if name != "" {
-				url = url + "&q=" + name
+				url = url + "&keyword=" + name
 			}
 			c.OnError(func(_ *colly.Response, err error) {
 				fmt.Println("search error ", err)
@@ -63,12 +65,11 @@ func biqusoso() *THandler {
 					<li><a href="/booktxt/82989775116/1920260116.html">第1章 德才中学</a></li>
 				</ul>
 			*/
-			c.OnHTML(".book-chapter-list", func(e *colly.HTMLElement) {
-				e.ForEach("ul", func(i int, el *colly.HTMLElement) {
+			c.OnHTML("#listt", func(e *colly.HTMLElement) {
+				e.ForEach("dt", func(i int, el *colly.HTMLElement) {
 					if i > 0 {
-						el.ForEach("li a", func(li int, a *colly.HTMLElement) {
-							href := a.Attr("href")
-							link := strings.Replace(strings.Replace(href, ".html", "", -1), "/booktxt/", "", -1)
+						el.ForEach("dd a", func(li int, a *colly.HTMLElement) {
+							link := a.Attr("href")
 							d.Data = append(d.Data, TBookData{
 								Name: a.Text,
 								Link: link,
@@ -85,13 +86,13 @@ func biqusoso() *THandler {
 			c.Visit(url)
 		},
 		C_fnc: func(c *colly.Collector, d *TChapter, url string) {
-			c.OnHTML("#chapter-title h1", func(e *colly.HTMLElement) {
+			c.OnHTML(".bookname h1", func(e *colly.HTMLElement) {
 				d.Data.Title = e.Text
 			})
-			c.OnHTML("#txt", func(e *colly.HTMLElement) {
+			c.OnHTML("#content", func(e *colly.HTMLElement) {
 				ret, _ := e.DOM.Html()
 				// 去除网站广告
-				content := strings.Split(ret, "『如果章节错误，点此举报』</a>")[1]
+				content := strings.Split(ret, "<div align=\"center\">")[0]
 				d.Data.Content = content
 			})
 			/*
@@ -103,17 +104,14 @@ func biqusoso() *THandler {
 					<a class="url_next" id="pb_next" href="/booktxt/82989775116/">下一章</a>
 				</div>
 			*/
-			c.OnHTML("#pb_prev", func(e *colly.HTMLElement) {
-				href := e.Attr("href")
-				d.Data.Prev = strings.Replace(strings.Replace(href, ".html", "", -1), "/booktxt/", "", -1)
+			c.OnHTML(".pre", func(e *colly.HTMLElement) {
+				d.Data.Prev = e.Attr("href")
 			})
-			c.OnHTML("#pb_mulu", func(e *colly.HTMLElement) {
-				d.Data.Dir = strings.Replace(e.Attr("href"), "/booktxt/", "", -1)
+			c.OnHTML(".back", func(e *colly.HTMLElement) {
+				d.Data.Dir = e.Attr("href")
 			})
-			c.OnHTML("#pb_next", func(e *colly.HTMLElement) {
+			c.OnHTML(".next", func(e *colly.HTMLElement) {
 				d.Data.Next = e.Attr("href")
-				href := e.Attr("href")
-				d.Data.Next = strings.Replace(strings.Replace(href, ".html", "", -1), "/booktxt/", "", -1)
 			})
 			c.OnError(func(_ *colly.Response, err error) {
 				fmt.Println("chapter error ", err)
@@ -122,14 +120,14 @@ func biqusoso() *THandler {
 
 			c.Visit(url)
 		},
-		Host:    "so.biqusoso.com",
-		Origin:  "so.biqusoso.com",
-		Referer: "https://so.biqusoso.com",
+		Host:    "www.166xs.org",
+		Origin:  "www.166xs.org",
+		Referer: "https://www.166xs.org",
 		BURL: func(key string) string {
-			return "http://www.qu-la.com/booktxt/" + key + "116/"
+			return "https://www.166xs.org" + key
 		},
 		CURL: func(key string) string {
-			return "http://www.qu-la.com/booktxt/" + key + ".html"
+			return "https://www.166xs.org" + key
 		},
 	}
 }
