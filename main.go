@@ -76,6 +76,8 @@ func getClient(host string, origin string, referer string) *colly.Collector {
 	return c
 }
 
+type any interface{}
+
 type TEmpty struct {
 	Code int    `json:"code"`
 	Msg  string `json:"msg"`
